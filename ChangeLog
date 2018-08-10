@@ -2,15 +2,50 @@
 Pylint's ChangeLog
 ------------------
 
+What's New in Pylint 1.9.4?
+===========================
+
+Release date: |TBA|
+
+    * Fixed false positive when a numpy Attributes section follows a Parameters
+      section
+
+      Close #1867
+
+   * Add support for nupmydoc optional return value names.
+
+      Close #2030
+
+   * Can specify a default docstring type for when the check cannot guess the type
+
+      Close #1169
+
+
 What's New in Pylint 1.9.3?
 ===========================
 
+Release date: 2018-07-24
 
-Release date: |TBA|
+   * `chain.from_iterable` no longer emits `dict-{}-not-iterating` when dealing with dict values and keys
+
+    * Fix incorrect file path when file absolute path contains multiple ``path_strip_prefix`` strings.
+
+      Close #1120 and #2280
+
 
     * `in` is considered iterating context for some of the Python 3 porting checkers
 
       Close #2186
+
+    * Add `--exit-zero` option for continuous integration scripts to more
+      easily call Pylint in environments that abort when a program returns a
+      non-zero (error) status code.
+
+      Close #2042
+
+    * [].extend and similar builtin operations don't emit `dict-*-not-iterating` with the Python 3 porting checker
+
+      Close #2187
 
 
 What's New in Pylint 1.9.2?

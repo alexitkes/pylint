@@ -145,14 +145,15 @@ def possible_exc_types(node):
         return set()
 
 
-def docstringify(docstring):
+def docstringify(docstring, default_type='default'):
     for docstring_type in [SphinxDocstring, EpytextDocstring,
                            GoogleDocstring, NumpyDocstring]:
         instance = docstring_type(docstring)
         if instance.is_valid():
             return instance
 
-    return Docstring(docstring)
+    docstring_type = DOCSTRING_TYPES.get(default_type, Docstring)
+    return docstring_type(docstring)
 
 
 class Docstring(object):
@@ -428,6 +429,7 @@ class GoogleDocstring(Docstring):
         \s*  \*{{0,2}}(\w+)             # identifier potentially with asterisks
         \s*  ( [(]
             {type}
+            (?:,\s+optional)?
             [)] )? \s* :                # optional type declaration
         \s*  (.*)                       # beginning of optional description
     """.format(
@@ -609,6 +611,12 @@ class GoogleDocstring(Docstring):
     def min_section_indent(section_match):
         return len(section_match.group(1)) + 1
 
+    @staticmethod
+    def _is_section_header(_):
+        # Google parsing does not need to detect section headers,
+        # because it works off of indentation level only
+        return False
+
     def _parse_section(self, section_re):
         section_match = section_re.search(self.doc)
         if section_match is None:
@@ -633,6 +641,8 @@ class GoogleDocstring(Docstring):
                 is_first = False
 
             if indentation == min_indentation:
+                if self._is_section_header(line):
+                    break
                 # Lines with minimum indentation must contain the beginning
                 # of a new parameter documentation.
                 if entry:
@@ -685,8 +695,9 @@ class NumpyDocstring(GoogleDocstring):
     )
 
     re_returns_line = re.compile(r"""
-        \s* ({type})$ # type declaration
-        \s* (.*)                       # optional description
+        \s* (?:\w+\s+:\s+)? # optional name
+        ({type})$                         # type declaration
+        \s* (.*)                          # optional description
     """.format(
         type=GoogleDocstring.re_multiple_type,
     ), re.X | re.S | re.M)
@@ -703,3 +714,20 @@ class NumpyDocstring(GoogleDocstring):
     @staticmethod
     def min_section_indent(section_match):
         return len(section_match.group(1))
+
+    @staticmethod
+    def _is_section_header(line):
+        return bool(re.match(r'\s*-+$', line))
+
+
+DOCSTRING_TYPES = {
+    'sphinx': SphinxDocstring,
+    'epytext': EpytextDocstring,
+    'google': GoogleDocstring,
+    'numpy': NumpyDocstring,
+    'default': Docstring,
+}
+"""A map of the name of the docstring type to its class.
+
+:type: dict(str, type)
+"""

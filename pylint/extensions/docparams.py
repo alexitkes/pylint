@@ -128,6 +128,11 @@ class DocstringParameterChecker(BaseChecker):
                 {'default': False, 'type': 'yn', 'metavar': '<y or n>',
                  'help': 'Ignore documented arguments not appearing in the '
                          'argument list if function has a **kwargs argument.'
+               ('default-docstring-type',
+                {'type': 'choice', 'default': 'default',
+                 'choices': list(utils.DOCSTRING_TYPES),
+                 'help': 'If the docstring type cannot be guessed '
+                         'the specified docstring type will be used.'
                 }),
               )
 
@@ -142,7 +147,9 @@ class DocstringParameterChecker(BaseChecker):
         :param node: Node for a function or method definition in the AST
         :type node: :class:`astroid.scoped_nodes.Function`
         """
-        node_doc = utils.docstringify(node.doc)
+        node_doc = utils.docstringify(
+            node.doc, self.config.default_docstring_type,
+        )
         self.check_functiondef_params(node, node_doc)
         self.check_functiondef_returns(node, node_doc)
         self.check_functiondef_yields(node, node_doc)
@@ -152,7 +159,9 @@ class DocstringParameterChecker(BaseChecker):
         if node.name in self.constructor_names:
             class_node = checker_utils.node_frame_class(node)
             if class_node is not None:
-                class_doc = utils.docstringify(class_node.doc)
+                class_doc = utils.docstringify(
+                    class_node.doc, self.config.default_docstring_type,
+                )
                 self.check_single_constructor_params(class_doc, node_doc, class_node)
 
                 # __init__ or class docstrings can have no parameters documented
@@ -212,7 +221,9 @@ class DocstringParameterChecker(BaseChecker):
             if property_:
                 func_node = property_
 
-        doc = utils.docstringify(func_node.doc)
+        doc = utils.docstringify(
+            func_node.doc, self.config.default_docstring_type,
+        )
         if not doc.is_valid():
             if doc.doc:
                 self._handle_no_raise_doc(expected_excs, func_node)
@@ -230,7 +241,9 @@ class DocstringParameterChecker(BaseChecker):
         if not isinstance(func_node, astroid.FunctionDef):
             return
 
-        doc = utils.docstringify(func_node.doc)
+        doc = utils.docstringify(
+            func_node.doc, self.config.default_docstring_type,
+        )
         if not doc.is_valid() and self.config.accept_no_return_doc:
             return
 
@@ -255,7 +268,9 @@ class DocstringParameterChecker(BaseChecker):
         if not isinstance(func_node, astroid.FunctionDef):
             return
 
-        doc = utils.docstringify(func_node.doc)
+        doc = utils.docstringify(
+            func_node.doc, self.config.default_docstring_type,
+        )
         if not doc.is_valid() and self.config.accept_no_yields_doc:
             return
 

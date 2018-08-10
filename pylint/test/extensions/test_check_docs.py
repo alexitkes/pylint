@@ -750,6 +750,29 @@ class TestParamDocChecker(CheckerTestCase):
         ):
             self._visit_methods_of_class(node)
 
+    def test_constr_params_and_attributes_in_class_numpy(self):
+        """Example of a class with correct constructor parameter documentation
+        and an attributes section (Numpy style)
+        """
+        node = astroid.extract_node("""
+        class ClassFoo(object):
+            '''
+            Parameters
+            ----------
+            foo : str
+                Something.
+
+            Attributes
+            ----------
+            bar : str
+                Something.
+            '''
+            def __init__(self, foo):
+                self.bar = None
+        """)
+        with self.assertNoMessages():
+            self._visit_methods_of_class(node)
+
     def test_constr_params_in_init_sphinx(self):
         """Example of a class with missing constructor parameter documentation
         (Sphinx style)
@@ -1438,6 +1461,27 @@ class TestParamDocChecker(CheckerTestCase):
             """
             return named_arg
         '''.format(container_type))
+        with self.assertNoMessages():
+            self.checker.visit_functiondef(node)
+
+    def test_ignores_optional_specifier_google(self):
+        node = astroid.extract_node('''
+        def do_something(param1, param2, param3=(), param4=[], param5=[], param6=True):
+            """Do something.
+
+            Args:
+                param1 (str): Description.
+                param2 (dict(str, int)): Description.
+                param3 (tuple(str), optional): Defaults to empty. Description.
+                param4 (List[str], optional): Defaults to empty. Description.
+                param5 (list[tuple(str)], optional): Defaults to empty. Description.
+                param6 (bool, optional): Defaults to True. Description.
+
+            Returns:
+                int: Description.
+            """
+            return param1, param2, param3, param4, param5, param6
+        ''')
         with self.assertNoMessages():
             self.checker.visit_functiondef(node)
 
